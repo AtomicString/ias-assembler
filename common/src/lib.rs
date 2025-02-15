@@ -1,6 +1,6 @@
-mod rtn {
+pub mod rtn {
     use std::ops::RangeInclusive;
-    enum Register {
+    pub enum Register {
         AC,
         MQ,
         MBR,
@@ -10,31 +10,31 @@ mod rtn {
         MAR
     }
 
-    enum Addressing {
+    pub enum Addressing {
         Register(Register),
         Memory,
         Constant(u32)
     }
 
-    enum Amount {
+    pub enum Amount {
         Full,
         Range(RangeInclusive<usize>)
     }
 
-    struct Operand {
+    pub struct Operand {
         pub operand_type: Addressing,
         pub amount: Amount
     }
 
-    struct RegisterTransfer {
+    pub struct RegisterTransfer {
         pub from: Operand,
         pub to: Operand
     }
 }
 
-#[cfg(test)]
-mod tests {
-    
-    pub fn 
-
-}
+//#[cfg(test)]
+//mod tests {
+//
+//    pub fn 
+//
+//}
