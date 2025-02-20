@@ -16,6 +16,7 @@ pub mod rtn {
         Constant(u32)
     }
 
+    #[derive(Debug)]
     pub enum Amount {
         Full,
         Range(RangeInclusive<usize>)
