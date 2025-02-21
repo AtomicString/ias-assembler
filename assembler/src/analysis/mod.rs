@@ -1,14 +1,17 @@
+mod add;
 mod jump;
 mod load;
 mod stor;
+mod sub;
 
-use core::panic;
-
+use add::handle_add;
 use common::rtn::Amount;
+use jump::handle_jump;
 use load::handle_load;
 use pest::Parser;
 use pest_derive::Parser;
 use stor::handle_stor;
+use sub::handle_sub;
 //
 //pub struct Doc {
 //    pub lines: Vec<Operation>
@@ -51,7 +54,7 @@ use stor::handle_stor;
 //
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ComplexTerm {
     MQ,
     AC,
@@ -61,14 +64,21 @@ pub enum ComplexTerm {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ComplexExpr {
     Unary(ComplexUnaryWithSize),
     Binary(ComplexBinary),
+    ComplexMachineOp(ComplexMachineOp),
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
+pub enum ComplexMachineOp {
+    SkipLeftInstruction,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct ComplexBinary {
     pub op1: ComplexUnaryWithSize,
     pub op2: ComplexUnaryWithSize,
@@ -77,45 +87,45 @@ pub struct ComplexBinary {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ComplexUnaryWithSize {
     pub unary: ComplexUnary,
     pub size: Amount,
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ComplexOperation {
     Addition,
+    Subtraction,
     Division,
     Remainder,
     Multiply,
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ComplexUnary {
     Negative(ComplexUnarySignless),
-    NonNegative(ComplexUnarySignless),
     Signless(ComplexUnarySignless),
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ComplexUnarySignless {
     Absolute(ComplexTerm),
     Term(ComplexTerm),
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MedReprSingle {
     pub left: ComplexUnaryWithSize,
     pub right: ComplexExpr,
     pub condition: Option<Condition>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Condition {
     ACNonNegative,
 }
@@ -173,13 +183,5 @@ fn handle_div(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
 }
 
 fn handle_mul(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
-    todo!()
-}
-
-fn handle_sub(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
-    todo!()
-}
-
-fn handle_add(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
     todo!()
 }

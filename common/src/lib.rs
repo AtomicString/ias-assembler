@@ -7,35 +7,35 @@ pub mod rtn {
         IBR,
         IR,
         PC,
-        MAR
+        MAR,
     }
 
     pub enum Addressing {
         Register(Register),
         Memory,
-        Constant(u32)
+        Constant(u32),
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub enum Amount {
         Full,
-        Range(RangeInclusive<usize>)
+        Range(RangeInclusive<usize>),
     }
 
     pub struct Operand {
         pub operand_type: Addressing,
-        pub amount: Amount
+        pub amount: Amount,
     }
 
     pub struct RegisterTransfer {
         pub from: Operand,
-        pub to: Operand
+        pub to: Operand,
     }
 }
 
 //#[cfg(test)]
 //mod tests {
 //
-//    pub fn 
+//    pub fn
 //
 //}
