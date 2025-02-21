@@ -1,5 +1,5 @@
 pub mod rtn {
-    use std::ops::RangeInclusive;
+    use std::{fmt::Debug, fmt::Formatter, ops::RangeInclusive};
     pub enum Register {
         AC,
         MQ,
@@ -16,10 +16,21 @@ pub mod rtn {
         Constant(u32),
     }
 
-    #[derive(Debug, Clone)]
+    #[derive(Clone)]
     pub enum Amount {
         Full,
         Range(RangeInclusive<usize>),
+    }
+
+    impl Debug for Amount {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            match self {
+                Self::Full => f.write_str(""),
+                Self::Range(range) => {
+                    f.write_fmt(format_args!("<{:?}..{:?}>", range.start(), range.end()))
+                }
+            }
+        }
     }
 
     pub struct Operand {

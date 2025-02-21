@@ -1,5 +1,7 @@
 use common::rtn::Amount;
 
+use crate::analysis::ComplexBinary;
+
 use super::{
     ComplexExpr, ComplexOperation, ComplexTerm, ComplexUnary, ComplexUnarySignless,
     ComplexUnaryWithSize, MedRepr, MedReprSingle, Rule,
@@ -9,13 +11,13 @@ pub fn handle_sub(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
     let mut op_rules = operands.into_inner();
     let op1 = op_rules.next().unwrap();
     if op_rules.next().is_some() {
-        panic!("No second operand for ADD");
+        panic!("No second operand for SUB");
     }
     let mut op1_pairs = op1.into_inner();
     let op1_first = op1_pairs.next().unwrap();
 
     if Rule::neg_term == op1_first.as_rule() {
-        panic!("ADD doesn't support negative");
+        panic!("SUB doesn't support negative");
     }
 
     let op1_second = op1_first.into_inner().next().unwrap();
@@ -25,7 +27,7 @@ pub fn handle_sub(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
     let op1_third = op1_second.into_inner().next().unwrap();
 
     if Rule::memory != op1_third.as_rule() {
-        panic!("ADD doesn't support non-memory operands");
+        panic!("SUB doesn't support non-memory operands");
     }
 
     let mut address_field = op1_third.into_inner().next().unwrap().into_inner();
@@ -33,7 +35,7 @@ pub fn handle_sub(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
     let address_num = address_field.next().unwrap().as_str().parse().unwrap();
 
     if address_field.next().is_some() {
-        panic!("ADD doesn't support slicing");
+        panic!("SUB doesn't support slicing");
     }
 
     let ac_operand = ComplexUnaryWithSize {
@@ -50,7 +52,7 @@ pub fn handle_sub(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
         size: Amount::Full,
     };
 
-    let ac_sub_mx_operand = ComplexExpr::Binary(crate::analysis::ComplexBinary {
+    let ac_sub_mx_operand = ComplexExpr::Binary(ComplexBinary {
         op1: ac_operand.clone(),
         op2: mx_operand,
         op: ComplexOperation::Subtraction,
@@ -63,7 +65,6 @@ pub fn handle_sub(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
             right: ac_sub_mx_operand,
             condition: None,
         },
-        None,
         None,
     )
 }

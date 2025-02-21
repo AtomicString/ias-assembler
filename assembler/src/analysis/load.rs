@@ -16,8 +16,6 @@ pub fn handle_load(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
 
     let op1_first = op1_pairs.next().unwrap();
 
-    println!("{:?}", op1_first);
-
     match op1_first.as_rule() {
         Rule::signless => {
             let op1_second = op1_first.into_inner().next().unwrap();
@@ -84,7 +82,6 @@ pub fn load_mq_mx(op2: Pair<'_, Rule>) -> MedRepr {
     let op2 = op2.into_inner().next().unwrap();
     if Rule::memory == op2.as_rule() {
         let address = op2.into_inner().next().unwrap();
-        println!("{:?}", address);
         let memory_num: u16 = address
             .into_inner()
             .next()
@@ -102,7 +99,6 @@ pub fn load_mq_mx(op2: Pair<'_, Rule>) -> MedRepr {
                 right: memory_operand,
                 condition: None,
             },
-            None,
             None,
         );
     }
@@ -125,7 +121,6 @@ fn load_mq() -> MedRepr {
             right: ComplexExpr::Unary(mq_operand),
             condition: None,
         },
-        None,
         None,
     )
 }
@@ -150,7 +145,6 @@ fn load_mx(op1: Pair<'_, Rule>) -> MedRepr {
             condition: None,
         },
         None,
-        None,
     )
 }
 
@@ -173,7 +167,6 @@ fn load_abs_mx(op1: Pair<'_, Rule>) -> MedRepr {
             right: ComplexExpr::Unary(memory_operand),
             condition: None,
         },
-        None,
         None,
     )
 }
@@ -198,7 +191,6 @@ fn load_neg_abs_mx(op1: Pair<'_, Rule>) -> MedRepr {
             condition: None,
         },
         None,
-        None,
     )
 }
 
@@ -221,7 +213,6 @@ fn load_neg_mx(op1: Pair<'_, Rule>) -> MedRepr {
             right: memory_operand,
             condition: None,
         },
-        None,
         None,
     )
 }

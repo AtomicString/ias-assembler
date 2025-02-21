@@ -1,15 +1,23 @@
 mod add;
+mod div;
 mod jump;
 mod load;
+mod mul;
+mod sh;
 mod stor;
 mod sub;
 
+use std::fmt::{Debug, Formatter};
+
 use add::handle_add;
 use common::rtn::Amount;
+use div::handle_div;
 use jump::handle_jump;
 use load::handle_load;
+use mul::handle_mul;
 use pest::Parser;
 use pest_derive::Parser;
+use sh::{handle_lsh, handle_rsh};
 use stor::handle_stor;
 use sub::handle_sub;
 //
@@ -54,7 +62,7 @@ use sub::handle_sub;
 //
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub enum ComplexTerm {
     MQ,
     AC,
@@ -63,22 +71,52 @@ pub enum ComplexTerm {
     Constant(u16),
 }
 
+impl Debug for ComplexTerm {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ComplexTerm::MQ => f.write_fmt(format_args!("MQ")),
+            ComplexTerm::AC => f.write_fmt(format_args!("AC")),
+            ComplexTerm::PC => f.write_fmt(format_args!("PC")),
+            ComplexTerm::M(num) => f.write_fmt(format_args!("M({})", num)),
+            ComplexTerm::Constant(num) => f.write_fmt(format_args!("{}", num)),
+        }
+    }
+}
+
 #[allow(dead_code)]
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum ComplexExpr {
     Unary(ComplexUnaryWithSize),
     Binary(ComplexBinary),
     ComplexMachineOp(ComplexMachineOp),
 }
 
+impl Debug for ComplexExpr {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Unary(unary) => f.write_fmt(format_args!("{:?}", unary)),
+            Self::Binary(binary) => f.write_fmt(format_args!("{:?}", binary)),
+            Self::ComplexMachineOp(op) => f.write_fmt(format_args!("{:?}", op)),
+        }
+    }
+}
+
 #[allow(dead_code)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub enum ComplexMachineOp {
     SkipLeftInstruction,
 }
 
+impl Debug for ComplexMachineOp {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::SkipLeftInstruction => f.write_str("SkipLeftInstruction"),
+        }
+    }
+}
+
 #[allow(dead_code)]
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ComplexBinary {
     pub op1: ComplexUnaryWithSize,
     pub op2: ComplexUnaryWithSize,
@@ -86,11 +124,35 @@ pub struct ComplexBinary {
     pub size: Amount,
 }
 
+impl Debug for ComplexBinary {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "{:?}{}{:?}{:?}",
+            self.op1,
+            match self.op {
+                ComplexOperation::Addition => "+",
+                ComplexOperation::Division => "/",
+                ComplexOperation::Multiply => "*",
+                ComplexOperation::Remainder => "%",
+                ComplexOperation::Subtraction => "-",
+            },
+            self.op2,
+            self.size,
+        ))
+    }
+}
+
 #[allow(dead_code)]
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ComplexUnaryWithSize {
     pub unary: ComplexUnary,
     pub size: Amount,
+}
+
+impl Debug for ComplexUnaryWithSize {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{:?}{:?}", self.unary, self.size))
+    }
 }
 
 #[allow(dead_code)]
@@ -104,25 +166,54 @@ pub enum ComplexOperation {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub enum ComplexUnary {
     Negative(ComplexUnarySignless),
     Signless(ComplexUnarySignless),
 }
 
+impl Debug for ComplexUnary {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Negative(signless) => f.write_fmt(format_args!("-{:?}", signless)),
+            Self::Signless(signless) => f.write_fmt(format_args!("{:?}", signless)),
+        }
+    }
+}
+
 #[allow(dead_code)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub enum ComplexUnarySignless {
     Absolute(ComplexTerm),
     Term(ComplexTerm),
 }
 
+impl Debug for ComplexUnarySignless {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Absolute(term) => f.write_fmt(format_args!("|{:?}|", term)),
+            Self::Term(term) => f.write_fmt(format_args!("{:?}", term)),
+        }
+    }
+}
+
 #[allow(dead_code)]
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct MedReprSingle {
     pub left: ComplexUnaryWithSize,
     pub right: ComplexExpr,
     pub condition: Option<Condition>,
+}
+
+impl Debug for MedReprSingle {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "{:?} <- {:?}{}",
+            self.left,
+            self.right,
+            if self.condition.is_some() { '*' } else { '\0' }
+        ))
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -134,7 +225,7 @@ pub enum Condition {
 #[grammar = "grammar.pest"]
 struct IASParser;
 
-pub type MedRepr = (MedReprSingle, Option<MedReprSingle>, Option<MedReprSingle>);
+pub type MedRepr = (MedReprSingle, Option<MedReprSingle>);
 
 pub fn analysis(code: String) -> Result<Vec<MedRepr>, pest::error::Error<Rule>> {
     let doc = IASParser::parse(Rule::doc, &code)?
@@ -150,16 +241,16 @@ pub fn analysis(code: String) -> Result<Vec<MedRepr>, pest::error::Error<Rule>> 
         let mut line_rules = line.into_inner();
 
         let mnenomic = line_rules.next().unwrap();
-        let operands = line_rules.next().unwrap();
+        let operands = line_rules.next();
         let mnenomic_type = mnenomic.clone().into_inner().next().unwrap();
         let repr = match mnenomic_type.as_rule() {
-            Rule::load => handle_load(operands),
-            Rule::stor => handle_stor(operands),
-            Rule::jump => handle_jump(operands),
-            Rule::add => handle_add(operands),
-            Rule::sub => handle_sub(operands),
-            Rule::mul => handle_mul(operands),
-            Rule::div => handle_div(operands),
+            Rule::load => handle_load(operands.expect("LOAD needs operands")),
+            Rule::stor => handle_stor(operands.expect("STOR needs operands")),
+            Rule::jump => handle_jump(operands.expect("JUMP needs operands")),
+            Rule::add => handle_add(operands.expect("ADD needs operands")),
+            Rule::sub => handle_sub(operands.expect("SUB needs operands")),
+            Rule::mul => handle_mul(operands.expect("MUL needs operands")),
+            Rule::div => handle_div(operands.expect("DIV needs operands")),
             Rule::lsh => handle_lsh(operands),
             Rule::rsh => handle_rsh(operands),
             _ => unreachable!(),
@@ -168,20 +259,4 @@ pub fn analysis(code: String) -> Result<Vec<MedRepr>, pest::error::Error<Rule>> 
         med_repr.push(repr);
     }
     Ok(med_repr)
-}
-
-fn handle_rsh(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
-    todo!()
-}
-
-fn handle_lsh(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
-    todo!()
-}
-
-fn handle_div(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
-    todo!()
-}
-
-fn handle_mul(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
-    todo!()
 }

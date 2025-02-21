@@ -13,13 +13,19 @@ pub fn handle_stor(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
         panic!("No second operand for STOR");
     }
     let mut op1_pairs = op1.into_inner();
-    let op1_first = op1_pairs.next().unwrap();
+    let op1_first = op1_pairs.next().unwrap().into_inner().next().unwrap();
 
     if Rule::signless != op1_first.as_rule() {
         panic!("STOR doesn't support negative or nonnegative");
     }
 
-    let op1_second = op1_first.into_inner().next().unwrap();
+    let op1_second = op1_first
+        .into_inner()
+        .next()
+        .unwrap()
+        .into_inner()
+        .next()
+        .unwrap();
 
     if Rule::memory != op1_second.as_rule() {
         panic!("STOR doesn't support non-memory operands");
@@ -53,7 +59,6 @@ fn stor_mx(address_num: u16) -> MedRepr {
             condition: None,
         },
         None,
-        None,
     )
 }
 
@@ -80,7 +85,6 @@ fn stor_mx_slice(address_num: u16, slice: Pair<'_, Rule>) -> MedRepr {
             right: ac_operand,
             condition: None,
         },
-        None,
         None,
     )
 }

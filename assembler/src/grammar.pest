@@ -1,7 +1,7 @@
 WHITESPACE = _{ " " | "\t" }
 COMMENT = _{ ";" ~ (!NEWLINE ~ ANY)* }
 doc = { SOI ~ NEWLINE* ~ operation* ~ NEWLINE* ~ EOI }
-operation = { mnemonic ~ operands ~ NEWLINE+ }
+operation = { mnemonic ~ operands? ~ NEWLINE+ }
 operands = {expr ~ ("," ~ term)? }
 neg_term = { "-" ~ signless }
 nonneg_term = { "+" ~ signless }

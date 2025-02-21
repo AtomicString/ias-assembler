@@ -92,6 +92,5 @@ pub fn handle_jump(operands: Pair<'_, Rule>) -> MedRepr {
             right: skip_operand,
             condition,
         }),
-        None,
     )
 }
