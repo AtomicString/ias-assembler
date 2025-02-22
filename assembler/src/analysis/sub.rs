@@ -3,8 +3,8 @@ use common::rtn::Amount;
 use crate::analysis::ComplexBinary;
 
 use super::{
-    ComplexExpr, ComplexOperation, ComplexTerm, ComplexUnary, ComplexUnarySignless,
-    ComplexUnaryWithSize, MedRepr, MedReprSingle, Rule,
+    ComplexExpr, ComplexOperation, ComplexTerm, ComplexUnary, ComplexUnaryWithSize, MedRepr,
+    MedReprSingle, Rule,
 };
 
 pub fn handle_sub(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
@@ -39,15 +39,15 @@ pub fn handle_sub(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
     }
 
     let ac_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::AC)),
+        unary: ComplexUnary::basic(ComplexTerm::AC),
         size: Amount::Full,
     };
 
     let mx_operand = ComplexUnaryWithSize {
-        unary: if is_abs {
-            ComplexUnary::Signless(ComplexUnarySignless::Absolute(ComplexTerm::M(address_num)))
-        } else {
-            ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::M(address_num)))
+        unary: ComplexUnary {
+            signless: ComplexTerm::M(address_num),
+            is_neg: false,
+            is_abs,
         },
         size: Amount::Full,
     };

@@ -12,8 +12,20 @@ pub mod rtn {
 
     pub enum Addressing {
         Register(Register),
+        Unary(Register, UnaryOperation),
+        MixedReg(Register, Register, BinaryOperation),
+        MixedConst(Register, u16, BinaryOperation),
         Memory,
-        Constant(u32),
+        Constant(u16),
+    }
+
+    pub enum UnaryOperation {
+        BitFlip,
+    }
+
+    pub enum BinaryOperation {
+        Addition,
+        Multiplication,
     }
 
     #[derive(Clone)]

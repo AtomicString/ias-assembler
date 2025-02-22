@@ -2,8 +2,7 @@ use common::rtn::Amount;
 use pest::iterators::Pair;
 
 use super::{
-    ComplexExpr, ComplexTerm, ComplexUnary, ComplexUnarySignless, ComplexUnaryWithSize, MedRepr,
-    MedReprSingle, Rule,
+    ComplexExpr, ComplexTerm, ComplexUnary, ComplexUnaryWithSize, MedRepr, MedReprSingle, Rule,
 };
 
 pub fn handle_stor(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
@@ -45,11 +44,11 @@ pub fn handle_stor(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
 
 fn stor_mx(address_num: u16) -> MedRepr {
     let ac_operand = ComplexExpr::Unary(super::ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::AC)),
+        unary: ComplexUnary::basic(ComplexTerm::AC),
         size: Amount::Full,
     });
     let mem_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::M(address_num))),
+        unary: ComplexUnary::basic(ComplexTerm::M(address_num)),
         size: Amount::Full,
     };
     (
@@ -72,11 +71,11 @@ fn stor_mx_slice(address_num: u16, slice: Pair<'_, Rule>) -> MedRepr {
     }
 
     let ac_operand = ComplexExpr::Unary(super::ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::AC)),
+        unary: ComplexUnary::basic(ComplexTerm::AC),
         size: Amount::Range(28..=39),
     });
     let mem_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::M(address_num))),
+        unary: ComplexUnary::basic(ComplexTerm::M(address_num)),
         size: Amount::Range(first..=second),
     };
     (

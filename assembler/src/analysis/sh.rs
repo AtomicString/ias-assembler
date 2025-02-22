@@ -4,8 +4,8 @@ use common::rtn::Amount;
 use pest::iterators::Pair;
 
 use super::{
-    ComplexBinary, ComplexExpr, ComplexOperation, ComplexTerm, ComplexUnary, ComplexUnarySignless,
-    ComplexUnaryWithSize, MedRepr, MedReprSingle, Rule,
+    ComplexBinary, ComplexExpr, ComplexOperation, ComplexTerm, ComplexUnary, ComplexUnaryWithSize,
+    MedRepr, MedReprSingle, Rule,
 };
 
 pub fn handle_lsh(operands: Option<Pair<'_, Rule>>) -> MedRepr {
@@ -14,12 +14,12 @@ pub fn handle_lsh(operands: Option<Pair<'_, Rule>>) -> MedRepr {
     }
 
     let ac_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::AC)),
+        unary: ComplexUnary::basic(ComplexTerm::AC),
         size: Amount::Full,
     };
 
     let const_2 = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::Constant(2))),
+        unary: ComplexUnary::basic(ComplexTerm::Constant(2)),
         size: Amount::Full,
     };
 
@@ -46,12 +46,12 @@ pub fn handle_rsh(operands: Option<Pair<'_, Rule>>) -> MedRepr {
     }
 
     let ac_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::AC)),
+        unary: ComplexUnary::basic(ComplexTerm::AC),
         size: Amount::Full,
     };
 
     let const_2 = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::Constant(2))),
+        unary: ComplexUnary::basic(ComplexTerm::Constant(2)),
         size: Amount::Full,
     };
 

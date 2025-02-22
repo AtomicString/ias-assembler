@@ -2,8 +2,7 @@ use common::rtn::Amount;
 use pest::iterators::Pair;
 
 use super::{
-    ComplexExpr, ComplexTerm, ComplexUnary, ComplexUnarySignless, ComplexUnaryWithSize, MedRepr,
-    MedReprSingle, Rule,
+    ComplexExpr, ComplexTerm, ComplexUnary, ComplexUnaryWithSize, MedRepr, MedReprSingle, Rule,
 };
 
 pub fn handle_load(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
@@ -75,7 +74,11 @@ pub fn handle_load(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
 
 pub fn load_mq_mx(op2: Pair<'_, Rule>) -> MedRepr {
     let mq_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::MQ)),
+        unary: ComplexUnary {
+            signless: ComplexTerm::MQ,
+            is_abs: false,
+            is_neg: false,
+        },
         size: Amount::Full,
     };
 
@@ -90,7 +93,11 @@ pub fn load_mq_mx(op2: Pair<'_, Rule>) -> MedRepr {
             .parse()
             .unwrap();
         let memory_operand = ComplexExpr::Unary(ComplexUnaryWithSize {
-            unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::M(memory_num))),
+            unary: ComplexUnary {
+                signless: ComplexTerm::M(memory_num),
+                is_neg: false,
+                is_abs: false,
+            },
             size: Amount::Full,
         });
         return (
@@ -107,12 +114,20 @@ pub fn load_mq_mx(op2: Pair<'_, Rule>) -> MedRepr {
 
 fn load_mq() -> MedRepr {
     let mq_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::MQ)),
+        unary: ComplexUnary {
+            signless: ComplexTerm::MQ,
+            is_neg: false,
+            is_abs: false,
+        },
         size: Amount::Full,
     };
 
     let ac_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::AC)),
+        unary: ComplexUnary {
+            signless: ComplexTerm::AC,
+            is_neg: false,
+            is_abs: false,
+        },
         size: Amount::Full,
     };
     (
@@ -129,12 +144,20 @@ fn load_mx(op1: Pair<'_, Rule>) -> MedRepr {
     let memory_num: u16 = op1.into_inner().next().unwrap().as_str().parse().unwrap();
 
     let memory_operand = ComplexExpr::Unary(ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::M(memory_num))),
+        unary: ComplexUnary {
+            signless: ComplexTerm::M(memory_num),
+            is_abs: false,
+            is_neg: false,
+        },
         size: Amount::Full,
     });
 
     let ac_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::AC)),
+        unary: ComplexUnary {
+            signless: ComplexTerm::AC,
+            is_neg: false,
+            is_abs: false,
+        },
         size: Amount::Full,
     };
 
@@ -152,12 +175,20 @@ fn load_abs_mx(op1: Pair<'_, Rule>) -> MedRepr {
     let memory_num: u16 = op1.as_str().parse().unwrap();
 
     let memory_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Absolute(ComplexTerm::M(memory_num))),
+        unary: ComplexUnary {
+            signless: ComplexTerm::M(memory_num),
+            is_neg: false,
+            is_abs: true,
+        },
         size: Amount::Full,
     };
 
     let ac_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::AC)),
+        unary: ComplexUnary {
+            signless: ComplexTerm::AC,
+            is_abs: false,
+            is_neg: false,
+        },
         size: Amount::Full,
     };
 
@@ -175,12 +206,20 @@ fn load_neg_abs_mx(op1: Pair<'_, Rule>) -> MedRepr {
     let memory_num: u16 = op1.as_str().parse().unwrap();
 
     let memory_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Negative(ComplexUnarySignless::Absolute(ComplexTerm::M(memory_num))),
+        unary: ComplexUnary {
+            signless: ComplexTerm::M(memory_num),
+            is_neg: true,
+            is_abs: true,
+        },
         size: Amount::Full,
     };
 
     let ac_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::AC)),
+        unary: ComplexUnary {
+            signless: ComplexTerm::AC,
+            is_neg: false,
+            is_abs: false,
+        },
         size: Amount::Full,
     };
 
@@ -198,12 +237,20 @@ fn load_neg_mx(op1: Pair<'_, Rule>) -> MedRepr {
     let memory_num: u16 = op1.as_str().parse().unwrap();
 
     let memory_operand = ComplexExpr::Unary(ComplexUnaryWithSize {
-        unary: ComplexUnary::Negative(ComplexUnarySignless::Absolute(ComplexTerm::M(memory_num))),
+        unary: ComplexUnary {
+            signless: ComplexTerm::M(memory_num),
+            is_neg: true,
+            is_abs: false,
+        },
         size: Amount::Full,
     });
 
     let ac_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::AC)),
+        unary: ComplexUnary {
+            signless: ComplexTerm::AC,
+            is_neg: false,
+            is_abs: false,
+        },
         size: Amount::Full,
     };
 

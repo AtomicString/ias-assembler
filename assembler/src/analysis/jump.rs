@@ -4,8 +4,8 @@ use pest::iterators::Pair;
 use crate::analysis::ComplexExpr;
 
 use super::{
-    ComplexMachineOp, ComplexTerm, ComplexUnary, ComplexUnarySignless, ComplexUnaryWithSize,
-    Condition, MedRepr, MedReprSingle, Rule,
+    ComplexMachineOp, ComplexTerm, ComplexUnary, ComplexUnaryWithSize, Condition, MedRepr,
+    MedReprSingle, Rule,
 };
 
 pub fn handle_jump(operands: Pair<'_, Rule>) -> MedRepr {
@@ -62,14 +62,12 @@ pub fn handle_jump(operands: Pair<'_, Rule>) -> MedRepr {
     }
 
     let pc_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::PC)),
+        unary: ComplexUnary::basic(ComplexTerm::PC),
         size: rtn::Amount::Full,
     };
 
     let const_operand = ComplexExpr::Unary(ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::Constant(
-            address_num,
-        ))),
+        unary: ComplexUnary::basic(ComplexTerm::Constant(address_num)),
         size: rtn::Amount::Full,
     });
 
@@ -87,10 +85,14 @@ pub fn handle_jump(operands: Pair<'_, Rule>) -> MedRepr {
             right: const_operand,
             condition,
         },
-        Some(MedReprSingle {
-            left: pc_operand,
-            right: skip_operand,
-            condition,
-        }),
+        if first == 20 && second == 39 {
+            Some(MedReprSingle {
+                left: pc_operand,
+                right: skip_operand,
+                condition,
+            })
+        } else {
+            None
+        },
     )
 }

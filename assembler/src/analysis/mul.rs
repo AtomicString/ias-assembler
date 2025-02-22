@@ -4,8 +4,8 @@ use common::rtn::Amount;
 use pest::iterators::Pair;
 
 use super::{
-    ComplexExpr, ComplexOperation, ComplexTerm, ComplexUnary, ComplexUnarySignless,
-    ComplexUnaryWithSize, MedRepr, MedReprSingle,
+    ComplexExpr, ComplexOperation, ComplexTerm, ComplexUnary, ComplexUnaryWithSize, MedRepr,
+    MedReprSingle,
 };
 
 pub fn handle_mul(operands: Pair<'_, Rule>) -> MedRepr {
@@ -42,17 +42,17 @@ pub fn handle_mul(operands: Pair<'_, Rule>) -> MedRepr {
     }
 
     let mq_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::MQ)),
+        unary: ComplexUnary::basic(ComplexTerm::MQ),
         size: Amount::Full,
     };
 
     let ac_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::AC)),
+        unary: ComplexUnary::basic(ComplexTerm::AC),
         size: Amount::Full,
     };
 
     let mx_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::M(address_num))),
+        unary: ComplexUnary::basic(ComplexTerm::M(address_num)),
         size: Amount::Full,
     };
 

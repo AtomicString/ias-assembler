@@ -1,14 +1,23 @@
 extern crate common;
 
 mod analysis;
+mod synthesis;
 
 use analysis::{analysis, MedRepr};
 use common::rtn::RegisterTransfer;
+use synthesis::synthesis;
 
-pub fn assemble(code: String) -> Vec<RegisterTransfer> {
+#[derive(Default)]
+pub struct RegisterStack {
+    pub ac: i64,
+    pub mq: i64,
+}
+
+pub fn assemble(code: String, mem: [i64; 1024]) -> Vec<RegisterTransfer> {
     let semantics: Vec<MedRepr> = analysis(code).expect("Unsuccessful parse");
-    //let final_rtn: Vec<RegisterTransfer> = synthesis_phase(semantics);
-    return vec![];
+    let reg_stack: RegisterStack = RegisterStack::default();
+    let final_rtn: Vec<RegisterTransfer> = synthesis(semantics, mem, reg_stack);
+    final_rtn
 }
 
 #[cfg(test)]

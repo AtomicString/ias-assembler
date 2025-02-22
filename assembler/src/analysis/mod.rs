@@ -167,32 +167,36 @@ pub enum ComplexOperation {
 
 #[allow(dead_code)]
 #[derive(Clone, Copy)]
-pub enum ComplexUnary {
-    Negative(ComplexUnarySignless),
-    Signless(ComplexUnarySignless),
+pub struct ComplexUnary {
+    pub signless: ComplexTerm,
+    pub is_neg: bool,
+    pub is_abs: bool,
 }
 
-impl Debug for ComplexUnary {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Negative(signless) => f.write_fmt(format_args!("-{:?}", signless)),
-            Self::Signless(signless) => f.write_fmt(format_args!("{:?}", signless)),
+impl ComplexUnary {
+    fn basic(signless: ComplexTerm) -> Self {
+        Self {
+            signless,
+            is_neg: false,
+            is_abs: false,
         }
     }
 }
 
-#[allow(dead_code)]
-#[derive(Clone, Copy)]
-pub enum ComplexUnarySignless {
-    Absolute(ComplexTerm),
-    Term(ComplexTerm),
-}
-
-impl Debug for ComplexUnarySignless {
+impl Debug for ComplexUnary {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Absolute(term) => f.write_fmt(format_args!("|{:?}|", term)),
-            Self::Term(term) => f.write_fmt(format_args!("{:?}", term)),
+        if self.is_abs {
+            f.write_fmt(format_args!(
+                "{}|{:?}|",
+                if self.is_neg { "-" } else { "" },
+                self.signless
+            ))
+        } else {
+            f.write_fmt(format_args!(
+                "{}{:?}",
+                if self.is_neg { "-" } else { "" },
+                self.signless
+            ))
         }
     }
 }

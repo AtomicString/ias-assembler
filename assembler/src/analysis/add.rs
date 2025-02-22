@@ -3,7 +3,7 @@ use pest::iterators::Pair;
 
 use crate::analysis::{ComplexBinary, ComplexExpr, ComplexOperation, ComplexUnaryWithSize};
 
-use super::{ComplexTerm, ComplexUnary, ComplexUnarySignless, MedRepr, MedReprSingle, Rule};
+use super::{ComplexTerm, ComplexUnary, MedRepr, MedReprSingle, Rule};
 
 pub fn handle_add(operands: Pair<'_, Rule>) -> MedRepr {
     let mut op_rules = operands.into_inner();
@@ -37,15 +37,15 @@ pub fn handle_add(operands: Pair<'_, Rule>) -> MedRepr {
     }
 
     let ac_operand = ComplexUnaryWithSize {
-        unary: ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::AC)),
+        unary: ComplexUnary::basic(ComplexTerm::AC),
         size: Amount::Full,
     };
 
     let mx_operand = ComplexUnaryWithSize {
-        unary: if is_abs {
-            ComplexUnary::Signless(ComplexUnarySignless::Absolute(ComplexTerm::M(address_num)))
-        } else {
-            ComplexUnary::Signless(ComplexUnarySignless::Term(ComplexTerm::M(address_num)))
+        unary: ComplexUnary {
+            signless: ComplexTerm::M(address_num),
+            is_neg: false,
+            is_abs,
         },
         size: Amount::Full,
     };
