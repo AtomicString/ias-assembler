@@ -14,7 +14,7 @@ pub fn handle_sub(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
         panic!("No second operand for SUB");
     }
     let mut op1_pairs = op1.into_inner();
-    let op1_first = op1_pairs.next().unwrap();
+    let op1_first = op1_pairs.next().unwrap().into_inner().next().unwrap();
 
     if Rule::neg_term == op1_first.as_rule() {
         panic!("SUB doesn't support negative");

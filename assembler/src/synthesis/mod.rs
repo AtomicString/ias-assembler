@@ -1,5 +1,7 @@
 mod ac;
-use crate::synthesis::ac::handle_ac;
+mod mq;
+use crate::synthesis::mq::handle_mq;
+use crate::{analysis::ComplexUnary, synthesis::ac::handle_ac};
 use common::rtn::{
     Addressing, Amount, BinaryOperation, Operand, Register, RegisterTransfer, UnaryOperation,
 };
@@ -25,14 +27,17 @@ pub fn synthesis(
             final_list.extend([ibr_to_ir()].into_iter());
         }
         let first_line = line.0;
-        let left_op = first_line.left.unary;
+        let ComplexUnary {
+            signless: left_op,
+            is_abs: false,
+            is_neg: false,
+        } = first_line.left.unary
+        else {
+            panic!("Left operand cannot be negative or absolute");
+        };
         let right_op = first_line.right;
 
-        if left_op.is_abs || left_op.is_neg {
-            panic!("Left operand cannot be negative or absolute");
-        }
-
-        match left_op.signless {
+        match left_op {
             ComplexTerm::AC => final_list
                 .extend(handle_ac(right_op, &mut mem, &mut reg_stack, is_right_instr).into_iter()),
             ComplexTerm::MQ => final_list
@@ -63,15 +68,6 @@ fn handle_mem(
 }
 
 fn handle_pc(
-    right_op: ComplexExpr,
-    mem: &mut [i64; 1024],
-    reg_stack: &mut RegisterStack,
-    is_right_instr: bool,
-) -> Vec<RegisterTransfer> {
-    todo!()
-}
-
-fn handle_mq(
     right_op: ComplexExpr,
     mem: &mut [i64; 1024],
     reg_stack: &mut RegisterStack,

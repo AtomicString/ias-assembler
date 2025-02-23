@@ -156,7 +156,7 @@ impl Debug for ComplexUnaryWithSize {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ComplexOperation {
     Addition,
     Subtraction,

@@ -1,3 +1,5 @@
+use core::panic;
+
 use common::rtn::Amount;
 use pest::iterators::Pair;
 
@@ -42,28 +44,37 @@ pub fn handle_load(operands: pest::iterators::Pair<'_, Rule>) -> MedRepr {
                     }
                 }
                 Rule::abs_term => {
-                    if Rule::memory != op1_second.as_rule() {
+                    let op1_third = op1_second.into_inner().next().unwrap();
+                    if Rule::memory != op1_third.as_rule() {
                         panic!("Unknown abs term");
                     }
-                    load_abs_mx(op1_second.into_inner().next().unwrap())
+                    load_abs_mx(op1_third)
                 }
                 _ => unreachable!(),
             }
         }
         Rule::neg_term => {
-            let op1_second = op1_pairs.next().unwrap();
+            let op1_second = op1_first
+                .into_inner()
+                .next()
+                .unwrap()
+                .into_inner()
+                .next()
+                .unwrap();
             match op1_second.as_rule() {
                 Rule::abs_term => {
-                    if Rule::memory != op1_second.as_rule() {
+                    let op1_third = op1_second.into_inner().next().unwrap();
+                    if Rule::memory != op1_third.as_rule() {
                         panic!("Unknown abs term");
                     }
-                    load_neg_abs_mx(op1_second.into_inner().next().unwrap())
+                    load_neg_abs_mx(op1_third)
                 }
                 Rule::term => {
-                    if Rule::memory != op1_second.as_rule() {
+                    let op1_third = op1_second.into_inner().next().unwrap();
+                    if Rule::memory != op1_third.as_rule() {
                         panic!("Unknown abs term");
                     }
-                    load_neg_mx(op1_second.into_inner().next().unwrap())
+                    load_neg_mx(op1_third)
                 }
                 _ => unreachable!(),
             }
@@ -141,7 +152,14 @@ fn load_mq() -> MedRepr {
 }
 
 fn load_mx(op1: Pair<'_, Rule>) -> MedRepr {
-    let memory_num: u16 = op1.into_inner().next().unwrap().as_str().parse().unwrap();
+    let address = op1.into_inner().next().unwrap();
+    let mut address_fields = address.into_inner();
+    let memory_num: u16 = address_fields.next().unwrap().as_str().parse().unwrap();
+    let slice_maybe = address_fields.next();
+
+    if slice_maybe.is_some() {
+        panic!("LOAD doesn't support slice operand");
+    }
 
     let memory_operand = ComplexExpr::Unary(ComplexUnaryWithSize {
         unary: ComplexUnary {
@@ -172,7 +190,14 @@ fn load_mx(op1: Pair<'_, Rule>) -> MedRepr {
 }
 
 fn load_abs_mx(op1: Pair<'_, Rule>) -> MedRepr {
-    let memory_num: u16 = op1.as_str().parse().unwrap();
+    let address = op1.into_inner().next().unwrap();
+    let mut address_fields = address.into_inner();
+    let memory_num: u16 = address_fields.next().unwrap().as_str().parse().unwrap();
+    let slice_maybe = address_fields.next();
+
+    if slice_maybe.is_some() {
+        panic!("Slice operands not supported by LOAD")
+    }
 
     let memory_operand = ComplexUnaryWithSize {
         unary: ComplexUnary {
@@ -203,7 +228,14 @@ fn load_abs_mx(op1: Pair<'_, Rule>) -> MedRepr {
 }
 
 fn load_neg_abs_mx(op1: Pair<'_, Rule>) -> MedRepr {
-    let memory_num: u16 = op1.as_str().parse().unwrap();
+    let address = op1.into_inner().next().unwrap();
+    let mut address_fields = address.into_inner();
+    let memory_num: u16 = address_fields.next().unwrap().as_str().parse().unwrap();
+    let slice_maybe = address_fields.next();
+
+    if slice_maybe.is_some() {
+        panic!("Slice operands not supported by LOAD")
+    }
 
     let memory_operand = ComplexUnaryWithSize {
         unary: ComplexUnary {
@@ -234,7 +266,14 @@ fn load_neg_abs_mx(op1: Pair<'_, Rule>) -> MedRepr {
 }
 
 fn load_neg_mx(op1: Pair<'_, Rule>) -> MedRepr {
-    let memory_num: u16 = op1.as_str().parse().unwrap();
+    let address = op1.into_inner().next().unwrap();
+    let mut address_fields = address.into_inner();
+    let memory_num: u16 = address_fields.next().unwrap().as_str().parse().unwrap();
+    let slice_maybe = address_fields.next();
+
+    if slice_maybe.is_some() {
+        panic!("Slice not supported for LOAD")
+    }
 
     let memory_operand = ComplexExpr::Unary(ComplexUnaryWithSize {
         unary: ComplexUnary {

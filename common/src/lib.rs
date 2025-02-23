@@ -21,11 +21,15 @@ pub mod rtn {
 
     pub enum UnaryOperation {
         BitFlip,
+        LeftShift,
+        RightShift,
     }
 
     pub enum BinaryOperation {
         Addition,
+        Subtraction,
         Multiplication,
+        Remainder,
     }
 
     #[derive(Clone)]

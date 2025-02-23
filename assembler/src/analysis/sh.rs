@@ -58,7 +58,7 @@ pub fn handle_rsh(operands: Option<Pair<'_, Rule>>) -> MedRepr {
     let ac_div_2 = ComplexExpr::Binary(ComplexBinary {
         op1: ac_operand.clone(),
         op2: const_2,
-        op: ComplexOperation::Multiply,
+        op: ComplexOperation::Division,
         size: Amount::Full,
     });
 
