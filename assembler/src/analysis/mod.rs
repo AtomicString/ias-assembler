@@ -62,7 +62,7 @@ use sub::handle_sub;
 //
 
 #[allow(dead_code)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum ComplexTerm {
     MQ,
     AC,
@@ -174,7 +174,7 @@ pub struct ComplexUnary {
 }
 
 impl ComplexUnary {
-    fn basic(signless: ComplexTerm) -> Self {
+    pub fn basic(signless: ComplexTerm) -> Self {
         Self {
             signless,
             is_neg: false,
@@ -211,12 +211,11 @@ pub struct MedReprSingle {
 
 impl Debug for MedReprSingle {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!(
-            "{:?} <- {:?}{}",
-            self.left,
-            self.right,
-            if self.condition.is_some() { '*' } else { '\0' }
-        ))
+        if self.condition.is_some() {
+            f.write_fmt(format_args!("{:?} <- {:?}*", self.left, self.right,))
+        } else {
+            f.write_fmt(format_args!("{:?} <- {:?}", self.left, self.right,))
+        }
     }
 }
 
@@ -259,7 +258,7 @@ pub fn analysis(code: String) -> Result<Vec<MedRepr>, pest::error::Error<Rule>> 
             Rule::rsh => handle_rsh(operands),
             _ => unreachable!(),
         };
-        println!("{:?}", repr);
+        //println!("{:?}", repr);
         med_repr.push(repr);
     }
     Ok(med_repr)

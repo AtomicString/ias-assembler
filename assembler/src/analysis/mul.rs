@@ -60,14 +60,14 @@ pub fn handle_mul(operands: Pair<'_, Rule>) -> MedRepr {
         op1: mq_operand.clone(),
         op2: mx_operand.clone(),
         op: ComplexOperation::Multiply,
-        size: Amount::Range(40..=79),
+        size: Amount::Range { start: 40, end: 79 },
     });
 
     let mq_mul_mx_low_operand = ComplexExpr::Binary(ComplexBinary {
         op1: mq_operand.clone(),
         op2: mx_operand,
         op: ComplexOperation::Multiply,
-        size: Amount::Range(0..=39),
+        size: Amount::Range { start: 0, end: 39 },
     });
 
     (

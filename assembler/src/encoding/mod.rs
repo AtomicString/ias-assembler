@@ -8,8 +8,8 @@ use crate::analysis::{
 pub fn encode_mem(mem_addr: u16, size: Amount) -> i64 {
     (match size {
         Amount::Full => 0b100001 << 12,
-        Amount::Range(range) if range == (8..=19) => 0b10010 << 12,
-        Amount::Range(range) if range == (28..=39) => 0b10011 << 12,
+        Amount::Range { start, end } if start == 8 && end == 19 => 0b10010 << 12,
+        Amount::Range { start, end } if start == 28 && end == 39 => 0b10011 << 12,
         _ => unreachable!(),
     } | mem_addr as i64)
 }
@@ -192,8 +192,8 @@ pub fn encode_ac(right_op: ComplexExpr) -> i64 {
                     size: Amount::Full,
                 },
             op: COp::Multiply,
-            size: Amount::Range(range),
-        }) if range == (40..=79) => 0b1011 << 12 | mem_addr as i64,
+            size: Amount::Range { start, end },
+        }) if start == 40 && end == 79 => 0b1011 << 12 | mem_addr as i64,
         CE::Binary(CBinary {
             op1:
                 CUnarySize {

@@ -35,6 +35,7 @@
       packages = [
           rust
           pkgs.bacon
+          pkgs.wasm-pack
       ];
     };
   };

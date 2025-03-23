@@ -8,53 +8,188 @@ use crate::{
         ComplexUnaryWithSize,
     },
     synthesis::{flip_ac, m_to_mbr, reg_to_mar},
-    RegisterStack,
+    MachineState,
 };
 
-pub fn handle_ac(
-    right_op: ComplexExpr,
-    mem: &mut [i64; 1024],
-    reg_stack: &mut RegisterStack,
-    is_right_instr: bool,
-) -> Vec<RegisterTransfer> {
+pub fn handle_ac(right_op: ComplexExpr, state: &mut MachineState) -> Vec<RegisterTransfer> {
+    use ComplexBinary as CBinary;
+    use ComplexExpr as CE;
+    use ComplexUnary as CUnary;
+    use ComplexUnaryWithSize as CUnarySize;
+
     match right_op {
-        ComplexExpr::Unary(ComplexUnaryWithSize {
-            unary:
-                ComplexUnary {
-                    signless: ComplexTerm::MQ,
-                    is_neg: false,
-                    is_abs: false,
-                },
-            ..
-        }) => {
-            reg_stack.ac = reg_stack.mq;
-            vec![RegisterTransfer {
-                from: Operand {
-                    operand_type: Addressing::Register(Register::MQ),
-                    amount: Amount::Full,
-                },
-                to: Operand {
-                    operand_type: Addressing::Register(Register::AC),
-                    amount: Amount::Full,
-                },
-            }]
+        ComplexExpr::Unary(CUnarySize { unary, size }) => handle_ac_unary(unary, size, state),
+        ComplexExpr::Binary(CBinary { op1, op2, op, size }) => {
+            handle_ac_binary(op1, op2, op, size, state)
         }
-        ComplexExpr::Unary(ComplexUnaryWithSize {
-            unary:
-                ComplexUnary {
-                    signless: ComplexTerm::M(mem_addr),
-                    is_neg,
-                    is_abs,
-                },
-            ..
-        }) => {
-            let value = mem[mem_addr as usize];
+        _ => unreachable!(),
+    }
+}
+
+fn handle_ac_binary(
+    op1: ComplexUnaryWithSize,
+    op2: ComplexUnaryWithSize,
+    op: ComplexOperation,
+    size: Amount,
+    state: &mut MachineState,
+) -> Vec<RegisterTransfer> {
+    use ComplexTerm as CTerm;
+    if op1.unary.signless != CTerm::AC
+        && size == (Amount::Range { start: 40, end: 7 })
+        && op == ComplexOperation::Multiply
+    {
+        if let CTerm::M(mem_addr) = op2.unary.signless {
+            let res: i128 = state.reg_stack.mq as i128 * state.memory[mem_addr as usize] as i128;
+
+            state.reg_stack.ac = ((res >> 40) & 0x7FFFFFFFFF) as i64;
+            state.reg_stack.mq = (res & 0x7FFFFFFFFF) as i64;
+
+            state.reg_stack.ac *= if res < 0 { -1 } else { 1 };
+            state.reg_stack.mq *= if res < 0 { -1 } else { 1 };
+
+            return vec![
+                reg_to_mar(if state.handling_right {
+                    Register::IBR
+                } else {
+                    Register::MBR
+                }),
+                m_to_mbr(false),
+                mq_times_mbr_to_ac(),
+                mq_times_mbr_to_mq(),
+            ];
+        } else {
+            panic!()
+        }
+    }
+
+    let op2_unary = op2.unary;
+
+    match (op, op2_unary) {
+        (
+            ComplexOperation::Addition,
+            ComplexUnary {
+                signless: CTerm::M(mem_addr),
+                is_neg: false,
+                is_abs,
+            },
+        ) => {
+            let value = state.memory[mem_addr as usize];
+            let value = if is_abs { value.abs() } else { value };
+            state.reg_stack.ac =
+                (state.reg_stack.ac + value).clamp(-2i64.pow(39) + 1, 2i64.pow(39) - 1);
+            vec![
+                reg_to_mar(if state.handling_right {
+                    Register::IBR
+                } else {
+                    Register::MBR
+                }),
+                m_to_mbr(is_abs),
+                ac_add_mbr(),
+            ]
+        }
+        (
+            ComplexOperation::Subtraction,
+            ComplexUnary {
+                signless: CTerm::M(mem_addr),
+                is_neg: false,
+                is_abs,
+            },
+        ) => {
+            let value = state.memory[mem_addr as usize];
+            let value = if is_abs { value.abs() } else { value };
+            state.reg_stack.ac =
+                (state.reg_stack.ac + value).clamp(-2i64.pow(39) + 1, 2i64.pow(39) - 1);
+            vec![
+                reg_to_mar(if state.handling_right {
+                    Register::IBR
+                } else {
+                    Register::MBR
+                }),
+                m_to_mbr(is_abs),
+                ac_sub_mbr(),
+            ]
+        }
+        (
+            ComplexOperation::Remainder,
+            ComplexUnary {
+                signless: CTerm::M(mem_addr),
+                is_neg: false,
+                is_abs: false,
+            },
+        ) => {
+            let quo = state.reg_stack.ac / state.memory[mem_addr as usize];
+            let rem = state.reg_stack.ac % state.memory[mem_addr as usize];
+            state.reg_stack.ac = rem;
+            state.reg_stack.mq = quo;
+            vec![
+                reg_to_mar(if state.handling_right {
+                    Register::IBR
+                } else {
+                    Register::MBR
+                }),
+                m_to_mbr(false),
+                ac_div_m_to_mq(),
+                ac_rem_m_to_ac(),
+            ]
+        } //TODO: Finish AC <- AC*2 andd AC <- AC/2
+        (
+            ComplexOperation::Multiply,
+            ComplexUnary {
+                signless: CTerm::Constant(2),
+                is_neg: false,
+                is_abs: false,
+            },
+        ) => {
+            state.reg_stack.ac <<= 1;
+            vec![ac_lsh()]
+        }
+        (
+            ComplexOperation::Division,
+            ComplexUnary {
+                signless: CTerm::Constant(2),
+                is_neg: false,
+                is_abs: false,
+            },
+        ) => {
+            state.reg_stack.ac = (state.reg_stack.ac >> 1).clamp(2_i64.pow(39), -2_i64.pow(39));
+            vec![ac_rsh()]
+        }
+        _ => unreachable!(),
+    }
+}
+
+fn handle_ac_unary(
+    unary: ComplexUnary,
+    size: Amount,
+    state: &mut MachineState,
+) -> Vec<RegisterTransfer> {
+    use ComplexTerm as CTerm;
+    use ComplexUnary as CUnary;
+
+    if size != Amount::Full {
+        panic!("Size must be full for unary ac operations")
+    }
+    match unary {
+        CUnary {
+            signless: CTerm::MQ,
+            is_neg: false,
+            is_abs: false,
+        } => {
+            state.reg_stack.ac = state.reg_stack.mq;
+            vec![mq_to_ac()]
+        }
+        CUnary {
+            signless: CTerm::M(mem_addr),
+            is_neg,
+            is_abs,
+        } => {
+            let value = state.memory[mem_addr as usize];
             let value = if is_abs { value.abs() } else { value };
             let value = if is_neg { -value } else { value };
-            reg_stack.ac = value;
+            state.reg_stack.ac = value;
             if is_neg {
                 vec![
-                    reg_to_mar(if is_right_instr {
+                    reg_to_mar(if state.handling_right {
                         Register::IBR
                     } else {
                         Register::MBR
@@ -64,140 +199,111 @@ pub fn handle_ac(
                 ]
             } else {
                 vec![
-                    reg_to_mar(if is_right_instr {
+                    reg_to_mar(if state.handling_right {
                         Register::IBR
                     } else {
                         Register::MBR
                     }),
                     m_to_mbr(is_abs),
+                    mbr_to_ac(),
                 ]
             }
         }
-        ComplexExpr::Binary(ComplexBinary {
-            op1:
-                ComplexUnaryWithSize {
-                    unary:
-                        ComplexUnary {
-                            signless: ComplexTerm::AC,
-                            is_neg: false,
-                            is_abs: false,
-                        },
-                    size: Amount::Full,
-                },
-            op2:
-                ComplexUnaryWithSize {
-                    unary:
-                        ComplexUnary {
-                            signless: ComplexTerm::M(mem_addr),
-                            is_neg: false,
-                            is_abs,
-                        },
-                    size: Amount::Full,
-                },
-            op,
-            size: Amount::Full,
-        }) if op == ComplexOperation::Addition || op == ComplexOperation::Subtraction => {
-            let value = mem[mem_addr as usize];
-            let value = if is_abs { value.abs() } else { value };
-            match op {
-                ComplexOperation::Addition => {
-                    reg_stack.ac =
-                        (reg_stack.ac + value).clamp(-2i64.pow(39) + 1, 2i64.pow(39) - 1);
-                    vec![
-                        reg_to_mar(if is_right_instr {
-                            Register::IBR
-                        } else {
-                            Register::MBR
-                        }),
-                        m_to_mbr(is_abs),
-                        ac_add_mbr(),
-                    ]
-                }
-                ComplexOperation::Subtraction => {
-                    reg_stack.ac =
-                        (reg_stack.ac - value).clamp(-2i64.pow(39) + 1, 2i64.pow(39) - 1);
-                    vec![
-                        reg_to_mar(if is_right_instr {
-                            Register::IBR
-                        } else {
-                            Register::MBR
-                        }),
-                        m_to_mbr(is_abs),
-                        ac_sub_mbr(),
-                    ]
-                }
-                _ => unreachable!(),
-            }
-        }
-        ComplexExpr::Binary(ComplexBinary {
-            op1:
-                ComplexUnaryWithSize {
-                    unary:
-                        ComplexUnary {
-                            signless: ComplexTerm::AC,
-                            is_neg: false,
-                            is_abs: false,
-                        },
-                    size: Amount::Full,
-                },
-            op2:
-                ComplexUnaryWithSize {
-                    unary:
-                        ComplexUnary {
-                            signless: ComplexTerm::Constant(2),
-                            is_neg: false,
-                            is_abs: false,
-                        },
-                    size: Amount::Full,
-                },
-            op,
-            size: Amount::Full,
-        }) if op == ComplexOperation::Multiply || op == ComplexOperation::Division => match op {
-            ComplexOperation::Multiply => {
-                reg_stack.ac = (reg_stack.ac * 2).clamp(-2i64.pow(39) + 1, 2i64.pow(39) - 1);
-                vec![ac_lsh()]
-            }
-            ComplexOperation::Division => {
-                reg_stack.ac /= 2;
-                vec![ac_rsh()]
-            }
-            _ => unreachable!(),
-        },
-        ComplexExpr::Binary(ComplexBinary {
-            op1:
-                ComplexUnaryWithSize {
-                    unary:
-                        ComplexUnary {
-                            signless: ComplexTerm::AC,
-                            is_neg: false,
-                            is_abs: false,
-                        },
-                    size: Amount::Full,
-                },
-            op2:
-                ComplexUnaryWithSize {
-                    unary:
-                        ComplexUnary {
-                            signless: ComplexTerm::M(mem_addr),
-                            is_neg: false,
-                            is_abs: false,
-                        },
-                    size: Amount::Full,
-                },
-            op: ComplexOperation::Remainder,
-            size: Amount::Full,
-        }) => {
-            reg_stack.ac %= mem[mem_addr as usize];
-            vec![
-                reg_to_mar(if is_right_instr {
-                    Register::IBR
-                } else {
-                    Register::MBR
-                }),
-                ac_remainder(),
-            ]
-        }
         _ => unreachable!(),
+    }
+}
+
+pub(super) const fn mbr_to_ac() -> RegisterTransfer {
+    RegisterTransfer {
+        from: Operand {
+            operand_type: Addressing::Register(Register::MBR),
+            amount: Amount::Full,
+        },
+        to: Operand {
+            operand_type: Addressing::Register(Register::AC),
+            amount: Amount::Full,
+        },
+    }
+}
+
+pub(super) const fn ac_div_m_to_mq() -> RegisterTransfer {
+    RegisterTransfer {
+        from: Operand {
+            operand_type: Addressing::MixedReg(
+                Register::AC,
+                Register::MBR,
+                BinaryOperation::Division,
+            ),
+            amount: Amount::Full,
+        },
+        to: Operand {
+            operand_type: Addressing::Register(Register::MQ),
+            amount: Amount::Full,
+        },
+    }
+}
+
+pub(super) const fn ac_rem_m_to_ac() -> RegisterTransfer {
+    RegisterTransfer {
+        from: Operand {
+            operand_type: Addressing::MixedReg(
+                Register::AC,
+                Register::MBR,
+                BinaryOperation::Remainder,
+            ),
+            amount: Amount::Full,
+        },
+        to: Operand {
+            operand_type: Addressing::Register(Register::AC),
+            amount: Amount::Full,
+        },
+    }
+}
+
+pub(super) const fn mq_times_mbr_to_ac() -> RegisterTransfer {
+    RegisterTransfer {
+        from: Operand {
+            operand_type: Addressing::MixedReg(
+                Register::MQ,
+                Register::MBR,
+                BinaryOperation::Multiplication,
+            ),
+            amount: Amount::Range { start: 40, end: 79 },
+        },
+        to: Operand {
+            operand_type: Addressing::Register(Register::AC),
+            amount: Amount::Full,
+        },
+    }
+}
+
+pub(super) const fn mq_times_mbr_to_mq() -> RegisterTransfer {
+    RegisterTransfer {
+        from: Operand {
+            operand_type: Addressing::MixedReg(
+                Register::MQ,
+                Register::MBR,
+                BinaryOperation::Multiplication,
+            ),
+            amount: Amount::Range { start: 0, end: 39 },
+        },
+        to: Operand {
+            operand_type: Addressing::Register(Register::MQ),
+            amount: Amount::Full,
+        },
+    }
+}
+
+pub(super) const fn mq_to_ac() -> RegisterTransfer {
+    RegisterTransfer {
+        from: Operand {
+            operand_type: Addressing::Register(Register::MQ),
+            amount: Amount::Full,
+        },
+        to: Operand {
+            operand_type: Addressing::Register(Register::AC),
+            amount: Amount::Full,
+        },
     }
 }
 

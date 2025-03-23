@@ -3,7 +3,14 @@ name = "assembler"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+crate-type = ["cdylib"]
+
 [dependencies]
 common = { path = "../common" }
 pest = "2.7.15"
 pest_derive = "2.7.15"
+serde = { version = "1.0.219", features = ["derive", "serde_derive"] }
+serde-big-array = "0.5.1"
+tsify-next = "0.5.5"
+wasm-bindgen = "0.2.100"

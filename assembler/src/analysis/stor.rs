@@ -72,11 +72,14 @@ fn stor_mx_slice(address_num: u16, slice: Pair<'_, Rule>) -> MedRepr {
 
     let ac_operand = ComplexExpr::Unary(super::ComplexUnaryWithSize {
         unary: ComplexUnary::basic(ComplexTerm::AC),
-        size: Amount::Range(28..=39),
+        size: Amount::Range { start: 28, end: 39 },
     });
     let mem_operand = ComplexUnaryWithSize {
         unary: ComplexUnary::basic(ComplexTerm::M(address_num)),
-        size: Amount::Range(first..=second),
+        size: Amount::Range {
+            start: first,
+            end: second,
+        },
     };
     (
         MedReprSingle {
