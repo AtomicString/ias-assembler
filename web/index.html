@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title></title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        #editor {
+            width: 80%;
+            height: 70vh;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-family: 'IBM Plex Mono';
+            font-size: 14px;
+            outline: none;
+            background-color: white;
+            overflow-y: auto;
+        }
+
+        div.selected::before {
+            content: "->";
+        }
+
+        button {
+            margin-right: 5px;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+
+        @font-face {
+            font-family: 'IBM Plex Mono';
+            font-style: normal;
+            font-weight: 500;
+            font-display: swap;
+            src: url("./font/IBM.woff2") format("woff2");
+        }
+
+        .autocomplete-container { position: relative; display: inline-block; }
+
+        .autocomplete-list {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        .autocomplete-item {
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            width: 100%;
+            display: none;
+        }
+        .autocomplete-item {
+            padding: 5px;
+            cursor: pointer;
+        }
+        .autocomplete-item.active {
+            background: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="p-2">
+        <div class="text-3xl font-bold mb-4">IAS Simulator Website</div>
+        <div class="flex">
+            <div class="w-37/100">
+                <div class="text-lg font-bold">Architecture</div>
+                <img id="arch" src="./res/IAS.png" class="hidden" />
+                <canvas id="diagram" height="800" width="800" class="mt-5 w-full overflow-auto">
+                Your browser does not support the canvas tag.
+                </canvas>
+            </div>
+            <div class="w-28/100">
+                <div class="text-lg font-bold">Internals</div>
+                <div class="text-md">Memory</div>
+                <template id="mem"><div class="outline-1 outline-solid flex"><input maxlength="9" size="9" type="text" value=""></div></template>
+                <div id="mem-row" class="outline-solid outline-1 h-36 w-3/8 mx-auto my-5 overflow-auto">
+                </div>
+
+                <div class="text-md">Register</div>
+                <div class="outline-solid outline-1 w-3/8 mx-auto my-5" id="register">
+                    <div id="PC" class="outline-1 outline-solid flex"><span>PC: </span><span class="val"></span> </div>
+                    <div id="MQ" class="outline-1 outline-solid flex"><span>MQ: </span><span class="val"></span></div>
+                    <div id="AC" class="outline-1 outline-solid flex"><span>AC: </span><span class="val"></span></div>
+                </div>
+                <div>
+                    <button id="next" class="outline-solid outline-2 rounded-xl">Next</button>
+                </div>
+            </div>
+            <div class="w-35/100 autocomplete-container">
+                <div class="text-lg font-bold">Editor</div>
+                <div class="font-mono my-5" id="editor" contenteditable="true"></div>
+                <div id="autocomplete-list" class="autocomplete-list"></div>
+                <button id="compile" class="outline-2 rounded-xl outline-solid">Compile</button>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="./index.js">
+    </script>
+</body>
+</html>

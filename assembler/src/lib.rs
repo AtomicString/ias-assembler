@@ -25,9 +25,30 @@ pub struct MachineState {
 }
 
 #[wasm_bindgen]
+impl MachineState {
+    #[wasm_bindgen(getter)]
+    pub fn memory(&self) -> Vec<i64> {
+        self.memory.to_vec()
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_memory(&mut self, mem: Vec<i64>) {
+        self.memory = mem.try_into().unwrap();
+    }
+}
+
+#[wasm_bindgen]
 #[derive(Debug, Serialize, Deserialize, Tsify)]
 pub struct RegisterTransferList {
     transfer: Vec<RegisterTransfer>,
+}
+
+#[wasm_bindgen]
+impl RegisterTransferList {
+    #[wasm_bindgen(getter)]
+    pub fn get_transfer(&self) -> Vec<RegisterTransfer> {
+        self.transfer.clone()
+    }
 }
 
 #[wasm_bindgen]
@@ -35,6 +56,11 @@ impl MachineState {
     #[wasm_bindgen(constructor)]
     pub fn new() -> MachineState {
         Self::default()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn get_reg_stack(&self) -> RegisterStack {
+        self.reg_stack
     }
 }
 
@@ -50,11 +76,29 @@ impl Default for MachineState {
 }
 
 #[wasm_bindgen]
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct RegisterStack {
     pub ac: i64,
     pub mq: i64,
     pub pc: i64,
+}
+
+#[wasm_bindgen]
+impl RegisterStack {
+    #[wasm_bindgen(getter)]
+    pub fn get_ac(&self) -> i64 {
+        self.ac
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn get_mq(&self) -> i64 {
+        self.mq
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn get_pc(&self) -> i64 {
+        self.pc
+    }
 }
 
 #[wasm_bindgen]
@@ -64,7 +108,7 @@ pub fn gen_encoding(code: String, state: &mut MachineState) {
 }
 
 #[wasm_bindgen]
-pub fn step(state: &mut MachineState) -> RegisterTransferList {
+pub fn step(state: &mut MachineState) -> Vec<RegisterTransfer> {
     let mut reg_transfers = vec![];
     if state.reg_stack.pc == 0 {
         state.reg_stack.pc = 1;
@@ -73,9 +117,7 @@ pub fn step(state: &mut MachineState) -> RegisterTransferList {
 
     reg_transfers.extend(syn_next_instr(state));
 
-    RegisterTransferList {
-        transfer: reg_transfers,
-    }
+    reg_transfers
 }
 
 fn encode_instr(semantics: &[(MedReprSingle, Option<MedReprSingle>)], mem: &mut [i64; 1024]) {
@@ -241,11 +283,7 @@ mod tests {
 
     #[test]
     fn test_program_1() {
-        let program = "
-            LOAD M(500)
-            ADD M(501)
-            STOR M(502)
-        ";
+        let program = "LOAD M(500)\nADD M(501)\nSTOR M(502)\n";
         let mut state = MachineState::new();
         state.memory[500] = 2;
         state.memory[501] = 3;

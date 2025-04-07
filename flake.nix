@@ -20,13 +20,14 @@
       inherit system;
       overlays = [fenix.overlays.default];
     };
-    rust = fenix.packages.${system}.stable.withComponents [
-      "cargo"
-      "clippy"
-      "rust-src"
-      "rustc"
-      "rustfmt"
-      "rust-analyzer"
+    rust = with fenix.packages.${system}; combine [
+      stable.cargo
+      stable.clippy
+      stable.rust-src
+      stable.rustc
+      stable.rustfmt
+      stable.rust-analyzer
+      targets.wasm32-unknown-unknown.stable.rust-std
     ];
   in
   {

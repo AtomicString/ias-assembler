@@ -1,9 +1,9 @@
 pub mod rtn {
-    use std::{fmt::Debug, fmt::Formatter};
+    use std::fmt::{Debug, Display, Formatter};
 
     use serde::{Deserialize, Serialize};
     use tsify_next::Tsify;
-    use wasm_bindgen::prelude::wasm_bindgen;
+    use wasm_bindgen::{convert::VectorIntoWasmAbi, prelude::wasm_bindgen};
 
     #[derive(Tsify, Serialize, Deserialize, Clone, Copy)]
     pub enum Register {
@@ -122,10 +122,22 @@ pub mod rtn {
         }
     }
 
-    #[derive(Tsify, Serialize, Deserialize)]
+    #[derive(Tsify, Serialize, Deserialize, Clone, Copy)]
+    #[tsify(into_wasm_abi, from_wasm_abi)]
     pub struct RegisterTransfer {
         pub from: Operand,
         pub to: Operand,
+    }
+
+    #[wasm_bindgen]
+    pub fn rt_get_string(rt: &RegisterTransfer) -> String {
+        rt.to_string()
+    }
+
+    impl Display for RegisterTransfer {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            f.write_fmt(format_args!("{:?}", self))
+        }
     }
 
     impl Debug for RegisterTransfer {
