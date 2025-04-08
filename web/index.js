@@ -1,6 +1,7 @@
 import init, { MachineState, gen_encoding, step, rt_get_string } from './dist/assembler.js';
 await init();
 
+var states = [];
 var state = new MachineState();
 let canvas = document.getElementById("diagram");
 let ctx = canvas.getContext("2d");
@@ -25,8 +26,6 @@ function getCaretPosition() {
     // Adjust Y so that it aligns with the line rather than the caret
     const lineHeight = parseInt(window.getComputedStyle(editableDiv).lineHeight) || 20;
     
-    console.log(rect, parentRect, lineHeight)
-
     return {
         x: 0,// + editableDiv.scrollLeft,
         y: rect.top - 40// Offset for line spacing
@@ -100,21 +99,21 @@ editableDiv.addEventListener("input", function () {
 });
 
 function update_state(state) {
+    console.log("Updating!");
     memRow.innerHTML = '';
+    let memory = state.memory;
+    console.log(state.memory);
     for(let i=0;i<1024;i++) {
-        let memory = state.memory;
         let clonedMem = memTemplate.content.cloneNode(true);
         let input = clonedMem.querySelector("input");
         input.addEventListener("change", (event) => {
             let hex_re = /[0-9A-Fa-f]+/g;
-            console.log(memory)
             if (hex_re.test(event.target.value)) {
                 memory[i] = BigInt(parseInt(event.target.value.toLowerCase(), 16));
             } else {
                 memory[i] = BigInt(0);
             }
             state.memory = memory
-            console.log(state.memory[i])
         });
         input.value = memory[i].toString(16).toUpperCase();
         let label = document.createElement("span");
@@ -149,8 +148,24 @@ compileBtn.addEventListener("click", (event) => {
 
 const nextBtn = document.getElementById("next");
 nextBtn.addEventListener("click", (event) => {
+    states.push(state.get_clone());
+    console.log(states.length)
     step(state);
     update_state(state);
+    document.getElementById("prev").disabled = false;
+});
+
+const prevBtn = document.getElementById("prev");
+prevBtn.addEventListener("click", (event) => {
+    if (states.length > 0) {
+        state = states.pop();
+        update_state(state);
+        if (states.length == 0) {
+            event.target.disabled = true;
+        }
+    } else {
+        console.error("What happened?");
+    }
 });
 
 editableDiv.addEventListener("keydown", function (e) {

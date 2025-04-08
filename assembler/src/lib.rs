@@ -15,7 +15,7 @@ use tsify_next::Tsify;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
-#[derive(Debug, Serialize, Deserialize, Tsify)]
+#[derive(Debug, Serialize, Deserialize, Tsify, Clone, Copy)]
 pub struct MachineState {
     #[serde(with = "BigArray")]
     memory: [i64; 1024],
@@ -34,6 +34,11 @@ impl MachineState {
     #[wasm_bindgen(setter)]
     pub fn set_memory(&mut self, mem: Vec<i64>) {
         self.memory = mem.try_into().unwrap();
+    }
+
+    #[wasm_bindgen(method)]
+    pub fn get_clone(&mut self) -> MachineState {
+        *self
     }
 }
 
