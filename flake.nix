@@ -39,5 +39,32 @@
           pkgs.wasm-pack
       ];
     };
+
+    packages.x86_64-linux.docker = pkgs.dockerTools.buildImage {
+        name = "ias-assembler";
+        tag = "latest";
+
+        created = "now";
+        
+        copyToRoot = pkgs.buildEnv {
+            name = "image-root";
+            paths = [ 
+              (pkgs.runCommand "web-dir" {} ''
+                mkdir -p $out/app/web
+                cp -r ${./web} $out/app/web/
+              '')
+              pkgs.busybox
+            ];
+            pathsToLink = [ "/" ];
+          };
+
+        config = {
+          Cmd = [ "/bin/busybox" "httpd" "-f" "-v" "-p" "8000" "-c" "httpd.conf" ];
+          WorkingDir = "/app/web";
+          ExposedPorts = {
+            "8000/tcp" = {};
+          };
+        };
+    };
   };
 }

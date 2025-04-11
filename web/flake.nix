@@ -17,6 +17,7 @@
           geckodriver
           firefox
           python3Packages.selenium
+          busybox
       ];
     };
 
