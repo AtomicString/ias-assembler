@@ -1,19 +1,29 @@
-name: Deploy to GitHub Pages
+name: Build and Deploy Web
 
 on:
   push:
     branches:
-      - main  # or your default branch
+      - main
 
 permissions:
-  contents: write  # Required to push to gh-pages
+  contents: write
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Nix
+        uses: cachix/install-nix-action@v25
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Build with wasm-pack from assembler/
+        run: |
+          nix develop .# --command bash -c 'cd assembler && wasm-pack build --target web --out-dir ../web/dist/'
 
       - name: Deploy `web/` to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
