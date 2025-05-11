@@ -23,7 +23,13 @@ jobs:
 
       - name: Build with wasm-pack from assembler/
         run: |
-          nix develop .# --command bash -c 'cd assembler && wasm-pack build --target web --out-dir ../web/dist/'
+          nix develop .# --command bash -c '
+            cd assembler
+            wasm-pack build --target web --out-dir ../web/dist/
+          '
+
+      - name: Remove generated .gitignore so dist gets deployed
+        run: rm -f web/dist/.gitignore
 
       - name: Deploy `web/` to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
