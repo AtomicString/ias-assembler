@@ -1,0 +1,32 @@
+/* tslint:disable */
+/* eslint-disable */
+export const memory: WebAssembly.Memory;
+export const __wbg_machinestate_free: (a: number, b: number) => void;
+export const machinestate_memory: (a: number) => [number, number];
+export const machinestate_set_memory: (a: number, b: number, c: number) => void;
+export const machinestate_get_clone: (a: number) => number;
+export const __wbg_registertransferlist_free: (a: number, b: number) => void;
+export const registertransferlist_get_transfer: (a: number) => [number, number];
+export const machinestate_new: () => number;
+export const machinestate_get_reg_stack: (a: number) => number;
+export const __wbg_registerstack_free: (a: number, b: number) => void;
+export const __wbg_get_registerstack_ac: (a: number) => bigint;
+export const __wbg_set_registerstack_ac: (a: number, b: bigint) => void;
+export const __wbg_get_registerstack_mq: (a: number) => bigint;
+export const __wbg_set_registerstack_mq: (a: number, b: bigint) => void;
+export const __wbg_get_registerstack_pc: (a: number) => bigint;
+export const __wbg_set_registerstack_pc: (a: number, b: bigint) => void;
+export const registerstack_get_ac: (a: number) => bigint;
+export const registerstack_get_mq: (a: number) => bigint;
+export const registerstack_get_pc: (a: number) => bigint;
+export const gen_encoding: (a: number, b: number, c: number) => void;
+export const step: (a: number) => [number, number];
+export const rt_get_string: (a: any) => [number, number];
+export const __wbindgen_exn_store: (a: number) => void;
+export const __externref_table_alloc: () => number;
+export const __wbindgen_export_2: WebAssembly.Table;
+export const __wbindgen_malloc: (a: number, b: number) => number;
+export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+export const __wbindgen_free: (a: number, b: number, c: number) => void;
+export const __externref_drop_slice: (a: number, b: number) => void;
+export const __wbindgen_start: () => void;

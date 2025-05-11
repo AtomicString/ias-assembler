@@ -1,0 +1,15 @@
+{
+  "name": "assembler",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "assembler_bg.wasm",
+    "assembler.js",
+    "assembler.d.ts"
+  ],
+  "main": "assembler.js",
+  "types": "assembler.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
